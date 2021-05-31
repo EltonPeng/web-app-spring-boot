@@ -1,6 +1,7 @@
 package com.zijian.java.web.spring.webapp.service.impl;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import com.zijian.java.web.spring.webapp.io.entity.UserEntity;
 import com.zijian.java.web.spring.webapp.io.repositories.UserRepository;
@@ -10,6 +11,9 @@ import com.zijian.java.web.spring.webapp.shared.dto.UserDto;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -105,6 +109,24 @@ public class UserServiceImpl implements UserService {
         if(storedUser == null) throw new UsernameNotFoundException(id);
         userRepository.delete(storedUser);
         
+    }
+
+    @Override
+    public List<UserDto> getUsers(int page, int limit) {
+        List<UserDto> results = new ArrayList<>();
+
+        Pageable pageableRequest = PageRequest.of(page, limit);
+        Page<UserEntity> userEntities = userRepository.findAll(pageableRequest);
+
+        List<UserEntity> userList = userEntities.getContent();
+
+        for (UserEntity userEntity : userList){
+            UserDto userDto = new UserDto();
+            BeanUtils.copyProperties(userEntity, userDto);
+            results.add(userDto);
+        }
+
+        return results;
     }
     
 }
