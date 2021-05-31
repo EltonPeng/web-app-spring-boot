@@ -5,6 +5,7 @@ import com.zijian.java.web.spring.webapp.service.UserService;
 import com.zijian.java.web.spring.webapp.shared.dto.UserDto;
 import com.zijian.java.web.spring.webapp.ui.model.request.UserRequestModel;
 import com.zijian.java.web.spring.webapp.ui.model.response.ErrorMessages;
+import com.zijian.java.web.spring.webapp.ui.model.response.OperationStatusModel;
 import com.zijian.java.web.spring.webapp.ui.model.response.UserRest;
 
 import org.springframework.beans.BeanUtils;
@@ -54,13 +55,28 @@ public class UserController {
         return result;
     }
 
-    @PutMapping
-    public String updateUser() {
-        return "you update a user!";
+    @PutMapping(path="/{id}", consumes={MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
+    public UserRest updateUser(@PathVariable String id, @RequestBody UserRequestModel userRequestModel) {
+        
+        
+        UserRest result = new UserRest();
+        UserDto userDto = new UserDto();
+        BeanUtils.copyProperties(userRequestModel, userDto);
+
+        UserDto updatedUser = userService.updateUser(id, userDto);
+        BeanUtils.copyProperties(updatedUser, result);
+
+        return result;
     }
 
-    @DeleteMapping
-    public String deleteUser() {
-        return "you delete a user";
+    @DeleteMapping(path="/{id}", produces={MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
+    public OperationStatusModel deleteUser(@PathVariable String id) {
+
+        userService.deleteUser(id);
+
+        OperationStatusModel operationStatusModel = new OperationStatusModel();
+        operationStatusModel.setOperationName("DELETE");
+        operationStatusModel.setOperationResult("SUCCESS");
+        return operationStatusModel;
     }
 }
