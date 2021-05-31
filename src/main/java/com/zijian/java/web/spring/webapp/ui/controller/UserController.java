@@ -1,8 +1,10 @@
 package com.zijian.java.web.spring.webapp.ui.controller;
 
+import com.zijian.java.web.spring.webapp.exceptions.UserServiceException;
 import com.zijian.java.web.spring.webapp.service.UserService;
 import com.zijian.java.web.spring.webapp.shared.dto.UserDto;
 import com.zijian.java.web.spring.webapp.ui.model.request.UserRequestModel;
+import com.zijian.java.web.spring.webapp.ui.model.response.ErrorMessages;
 import com.zijian.java.web.spring.webapp.ui.model.response.UserRest;
 
 import org.springframework.beans.BeanUtils;
@@ -36,7 +38,12 @@ public class UserController {
     @PostMapping(
         consumes={MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE}, 
         produces={MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
-    public UserRest createUser(@RequestBody UserRequestModel userRequestModel) {        
+    public UserRest createUser(@RequestBody UserRequestModel userRequestModel) throws Exception {
+
+        if(userRequestModel.getFirstName().isEmpty())  throw new UserServiceException(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage());
+
+        if(userRequestModel.getLastName().isEmpty()) throw new NullPointerException("last name is empty. **");
+
         UserRest result = new UserRest();
         UserDto userDto = new UserDto();
         BeanUtils.copyProperties(userRequestModel, userDto);
