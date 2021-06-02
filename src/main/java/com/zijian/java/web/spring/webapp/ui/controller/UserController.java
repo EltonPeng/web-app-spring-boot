@@ -12,6 +12,7 @@ import com.zijian.java.web.spring.webapp.ui.model.response.ErrorMessages;
 import com.zijian.java.web.spring.webapp.ui.model.response.OperationStatusModel;
 import com.zijian.java.web.spring.webapp.ui.model.response.UserRest;
 
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -34,9 +35,9 @@ public class UserController {
 
     @GetMapping(path="/{id}", produces={MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
     public UserRest getUser(@PathVariable String id)  {
-        UserRest result = new UserRest();
         UserDto userDto = userService.getUserByUserId(id);
-        BeanUtils.copyProperties(userDto, result);
+        ModelMapper modelMapper = new ModelMapper();
+        UserRest result = modelMapper.map(userDto, UserRest.class);
 
         return result;
     }
@@ -65,12 +66,11 @@ public class UserController {
 
         if(userRequestModel.getLastName().isEmpty()) throw new NullPointerException("last name is empty. **");
 
-        UserRest result = new UserRest();
-        UserDto userDto = new UserDto();
-        BeanUtils.copyProperties(userRequestModel, userDto);
+        ModelMapper modelMapper = new ModelMapper();
+        UserDto userDto = modelMapper.map(userRequestModel, UserDto.class);
 
         UserDto createdUser = userService.createUser(userDto);
-        BeanUtils.copyProperties(createdUser, result);
+        UserRest result = modelMapper.map(createdUser, UserRest.class);
 
         return result;
     }

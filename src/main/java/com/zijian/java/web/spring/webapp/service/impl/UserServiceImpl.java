@@ -7,8 +7,10 @@ import com.zijian.java.web.spring.webapp.io.entity.UserEntity;
 import com.zijian.java.web.spring.webapp.io.repositories.UserRepository;
 import com.zijian.java.web.spring.webapp.service.UserService;
 import com.zijian.java.web.spring.webapp.shared.Utils;
+import com.zijian.java.web.spring.webapp.shared.dto.AddressDto;
 import com.zijian.java.web.spring.webapp.shared.dto.UserDto;
 
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -37,8 +39,16 @@ public class UserServiceImpl implements UserService {
 
         if(userRepository.findUserByEmail(user.getEmail()) != null) throw new RuntimeException("Record already exists.");
 
-        UserEntity userEntity = new UserEntity();
-        BeanUtils.copyProperties(user, userEntity);
+
+        for (int i=0; i<user.getAddresses().size(); i++){
+            AddressDto address = user.getAddresses().get(i);
+            address.setAddressId(utils.generateAddressId());
+            address.setUser(user);
+            user.getAddresses().set(i, address);
+        }
+
+        ModelMapper modelMapper = new ModelMapper();
+        UserEntity userEntity = modelMapper.map(user, UserEntity.class);
 
         String publicUserId = utils.generateUserId();
         userEntity.setUserId(publicUserId);
@@ -46,8 +56,7 @@ public class UserServiceImpl implements UserService {
 
         UserEntity storedUser = userRepository.save(userEntity);
 
-        UserDto result = new UserDto();
-        BeanUtils.copyProperties(storedUser, result);
+        UserDto result = modelMapper.map(storedUser, UserDto.class);
 
         return result;
     }
@@ -80,8 +89,7 @@ public class UserServiceImpl implements UserService {
         
         if(storedUser == null) throw new UsernameNotFoundException(id);
 
-        UserDto result = new UserDto();
-        BeanUtils.copyProperties(storedUser, result);
+        UserDto result = new ModelMapper().map(storedUser, UserDto.class);
 
         return result;
     }
