@@ -1,7 +1,7 @@
 package com.zijian.java.web.spring.webapp.ui.controller;
 
 import java.util.ArrayList;
-
+import java.util.Arrays;
 import java.util.List;
 
 import com.zijian.java.web.spring.webapp.exceptions.UserServiceException;
@@ -19,6 +19,7 @@ import org.modelmapper.ModelMapper;
 import org.modelmapper.TypeToken;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.MediaType;
@@ -58,21 +59,16 @@ public class UserController {
     }
 
     @GetMapping(path="/{userId}/addresses/{addressId}", produces={MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
-    public AddressRest getUserAddress(@PathVariable String userId, @PathVariable String addressId)  {
+    public EntityModel<AddressRest> getUserAddress(@PathVariable String userId, @PathVariable String addressId)  {
         AddressDto addressDto = addressService.getAddress(addressId);
 
         AddressRest result = new ModelMapper().map(addressDto, AddressRest.class);
 
         Link userLink = WebMvcLinkBuilder.linkTo(UserController.class).slash(userId).withRel("user");
-        result.add(userLink);
-
         Link userAddressesLink = WebMvcLinkBuilder.linkTo(UserController.class).slash(userId).slash("addresses").withRel("addresses");
-        result.add(userAddressesLink);
-
         Link selfLink = WebMvcLinkBuilder.linkTo(UserController.class).slash(userId).slash("addresses").slash(addressId).withSelfRel();
-        result.add(selfLink);
-
-        return result;
+    
+        return EntityModel.of(result, Arrays.asList(userLink, userAddressesLink, selfLink));
     }
 
     @GetMapping(produces={MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
