@@ -5,16 +5,22 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.zijian.java.web.spring.webapp.exceptions.UserServiceException;
+import com.zijian.java.web.spring.webapp.service.AddressService;
 import com.zijian.java.web.spring.webapp.service.UserService;
+import com.zijian.java.web.spring.webapp.shared.dto.AddressDto;
 import com.zijian.java.web.spring.webapp.shared.dto.UserDto;
 import com.zijian.java.web.spring.webapp.ui.model.request.UserRequestModel;
+import com.zijian.java.web.spring.webapp.ui.model.response.AddressRest;
 import com.zijian.java.web.spring.webapp.ui.model.response.ErrorMessages;
 import com.zijian.java.web.spring.webapp.ui.model.response.OperationStatusModel;
 import com.zijian.java.web.spring.webapp.ui.model.response.UserRest;
 
 import org.modelmapper.ModelMapper;
+import org.modelmapper.TypeToken;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.hateoas.Link;
+import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,11 +39,38 @@ public class UserController {
     @Autowired
     UserService userService; 
 
+    @Autowired
+    AddressService addressService;
+
     @GetMapping(path="/{id}", produces={MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
     public UserRest getUser(@PathVariable String id)  {
         UserDto userDto = userService.getUserByUserId(id);
-        ModelMapper modelMapper = new ModelMapper();
-        UserRest result = modelMapper.map(userDto, UserRest.class);
+
+        return new ModelMapper().map(userDto, UserRest.class);
+    }
+
+    @GetMapping(path="/{id}/addresses", produces={MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
+    public List<AddressRest> getUserAddresses(@PathVariable String id)  {
+        List<AddressDto> addressesDto = addressService.getAddressesByUserId(id);
+        java.lang.reflect.Type listType = new TypeToken<List<AddressRest>>() {}.getType();
+
+        return new ModelMapper().map(addressesDto, listType);
+    }
+
+    @GetMapping(path="/{userId}/addresses/{addressId}", produces={MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
+    public AddressRest getUserAddress(@PathVariable String userId, @PathVariable String addressId)  {
+        AddressDto addressDto = addressService.getAddress(addressId);
+
+        AddressRest result = new ModelMapper().map(addressDto, AddressRest.class);
+
+        Link userLink = WebMvcLinkBuilder.linkTo(UserController.class).slash(userId).withRel("user");
+        result.add(userLink);
+
+        Link userAddressesLink = WebMvcLinkBuilder.linkTo(UserController.class).slash(userId).slash("addresses").withRel("addresses");
+        result.add(userAddressesLink);
+
+        Link selfLink = WebMvcLinkBuilder.linkTo(UserController.class).slash(userId).slash("addresses").slash(addressId).withSelfRel();
+        result.add(selfLink);
 
         return result;
     }
