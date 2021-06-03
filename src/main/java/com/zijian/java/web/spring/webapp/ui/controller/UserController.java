@@ -19,6 +19,7 @@ import org.modelmapper.ModelMapper;
 import org.modelmapper.TypeToken;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
@@ -34,7 +35,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("users")
+@RequestMapping("/users")
 public class UserController {
 
     @Autowired
@@ -51,11 +52,21 @@ public class UserController {
     }
 
     @GetMapping(path="/{id}/addresses", produces={MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
-    public List<AddressRest> getUserAddresses(@PathVariable String id)  {
+    public CollectionModel<AddressRest> getUserAddresses(@PathVariable String id)  {
         List<AddressDto> addressesDto = addressService.getAddressesByUserId(id);
         java.lang.reflect.Type listType = new TypeToken<List<AddressRest>>() {}.getType();
 
-        return new ModelMapper().map(addressesDto, listType);
+        List<AddressRest> result = new ModelMapper().map(addressesDto, listType);
+        for(AddressRest addressRest: result){
+            Link selfLink = WebMvcLinkBuilder.linkTo(
+                WebMvcLinkBuilder.methodOn(UserController.class)
+                .getUserAddress(id, addressRest.getAddressId())).withSelfRel();
+            addressRest.add(selfLink);
+        }
+
+        Link userLink = WebMvcLinkBuilder.linkTo(UserController.class).slash(id).withRel("user"); 
+        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UserController.class).getUserAddresses(id)).withSelfRel();
+        return CollectionModel.of(result, userLink, selfLink);
     }
 
     @GetMapping(path="/{userId}/addresses/{addressId}", produces={MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
@@ -64,9 +75,7 @@ public class UserController {
 
         AddressRest result = new ModelMapper().map(addressDto, AddressRest.class);
 
-        Link userLink = WebMvcLinkBuilder.linkTo(UserController.class).slash(userId).withRel("user");
-
-        
+        Link userLink = WebMvcLinkBuilder.linkTo(UserController.class).slash(userId).withRel("user");        
         Link userAddressesLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UserController.class).getUserAddresses(userId)).withRel("addresses");
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UserController.class).getUserAddress(userId, addressId)).withSelfRel();
     
