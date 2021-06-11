@@ -44,14 +44,14 @@ public class UserController {
     @Autowired
     AddressService addressService;
 
-    @GetMapping(path="/{id}", produces={MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
+    @GetMapping(path = "/{id}", produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
     public UserRest getUser(@PathVariable String id)  {
         UserDto userDto = userService.getUserByUserId(id);
 
         return new ModelMapper().map(userDto, UserRest.class);
     }
 
-    @GetMapping(path="/{id}/addresses", produces={MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
+    @GetMapping(path = "/{id}/addresses", produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
     public CollectionModel<AddressRest> getUserAddresses(@PathVariable String id)  {
         List<AddressDto> addressesDto = addressService.getAddressesByUserId(id);
         java.lang.reflect.Type listType = new TypeToken<List<AddressRest>>() {}.getType();
@@ -69,7 +69,7 @@ public class UserController {
         return CollectionModel.of(result, userLink, selfLink);
     }
 
-    @GetMapping(path="/{userId}/addresses/{addressId}", produces={MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
+    @GetMapping(path = "/{userId}/addresses/{addressId}", produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
     public EntityModel<AddressRest> getUserAddress(@PathVariable String userId, @PathVariable String addressId)  {
         AddressDto addressDto = addressService.getAddress(addressId);
 
@@ -82,8 +82,8 @@ public class UserController {
         return EntityModel.of(result, Arrays.asList(userLink, userAddressesLink, selfLink));
     }
 
-    @GetMapping(produces={MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
-    public List<UserRest> getUsers(@RequestParam(value="page", defaultValue="0") int page, @RequestParam(value="limit", defaultValue="5") int limit)  {
+    @GetMapping(produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
+    public List<UserRest> getUsers(@RequestParam(value = "page", defaultValue = "0") int page, @RequestParam(value = "limit", defaultValue = "5") int limit)  {
         List<UserRest> results = new ArrayList<UserRest>();
         List<UserDto> users = userService.getUsers(page, limit);
 
@@ -98,8 +98,8 @@ public class UserController {
     }
 
     @PostMapping(
-        consumes={MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE}, 
-        produces={MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
+        consumes = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE}, 
+        produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
     public UserRest createUser(@RequestBody UserRequestModel userRequestModel) throws Exception {
 
         if(userRequestModel.getFirstName().isEmpty())  throw new UserServiceException(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage());
@@ -115,7 +115,7 @@ public class UserController {
         return result;
     }
 
-    @PutMapping(path="/{id}", consumes={MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
+    @PutMapping(path = "/{id}", consumes = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
     public UserRest updateUser(@PathVariable String id, @RequestBody UserRequestModel userRequestModel) {
         
         
@@ -129,14 +129,32 @@ public class UserController {
         return result;
     }
 
-    @DeleteMapping(path="/{id}", produces={MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
+    @DeleteMapping(path = "/{id}", produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
     public OperationStatusModel deleteUser(@PathVariable String id) {
 
         userService.deleteUser(id);
 
         OperationStatusModel operationStatusModel = new OperationStatusModel();
-        operationStatusModel.setOperationName("DELETE");
+        operationStatusModel.setOperationName(RequestOperationName.DELETE.name());
         operationStatusModel.setOperationResult("SUCCESS");
+        return operationStatusModel;
+    }
+
+    // http://localhost:8080/web-app/users/email-verification?token=xxxxxxxxxxx
+    @GetMapping(path = "/email-verification", produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
+    public OperationStatusModel verifyEmailToken(@RequestParam(value = "token") String token){
+
+        OperationStatusModel operationStatusModel = new OperationStatusModel();
+        operationStatusModel.setOperationName(RequestOperationName.VERIFY_EMAIL.name());
+
+        boolean isVerified = userService.verifyEmailToken(token);
+
+        if(isVerified){
+        operationStatusModel.setOperationResult("SUCCESS");
+        } else {
+            operationStatusModel.setOperationResult("ERROR");
+        }
+        
         return operationStatusModel;
     }
 }

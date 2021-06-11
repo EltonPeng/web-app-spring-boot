@@ -1,9 +1,16 @@
 package com.zijian.java.web.spring.webapp.shared;
 
 import java.security.SecureRandom;
+import java.util.Date;
 import java.util.Random;
 
+import com.zijian.java.web.spring.webapp.security.SecurityConstants;
+
 import org.springframework.stereotype.Component;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 
 @Component
 public class Utils {
@@ -18,6 +25,22 @@ public class Utils {
     public String generateAddressId() {
         return generateRandomString(20);
     }
+
+    public String generateEmailVerificationToken(String publicUserId) {
+        String token = Jwts.builder()
+            .setSubject(publicUserId)
+            .setExpiration(new Date(System.currentTimeMillis() + SecurityConstants.EXPIRATION_TIME))
+            .signWith(SignatureAlgorithm.HS512, SecurityConstants.getTokenSecret())
+            .compact();
+        
+        return token;
+    }
+
+	public static boolean hasTokenExpired(String token) {
+        Claims claims = Jwts.parser().setSigningKey(SecurityConstants.getTokenSecret()).parseClaimsJws(token).getBody();
+
+		return claims.getExpiration().before(new Date());
+	}
 
     private String generateRandomString(int length) {
         StringBuilder result = new StringBuilder(length);

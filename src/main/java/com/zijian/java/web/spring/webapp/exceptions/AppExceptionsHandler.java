@@ -14,8 +14,8 @@ import org.springframework.web.context.request.WebRequest;
 @ControllerAdvice
 public class AppExceptionsHandler {
 
-    @ExceptionHandler(value={UserServiceException.class})
-    public ResponseEntity<Object> handleUserServiceException(UserServiceException ex, WebRequest request){
+    @ExceptionHandler(value = {UserServiceException.class})
+    public ResponseEntity<Object> handleUserServiceException(final UserServiceException ex, final WebRequest request) {
 
         String message = "My handler says: " + ex.getMessage();
         ErrorMessage errorMessage = new ErrorMessage(new Date(), message);
@@ -23,8 +23,8 @@ public class AppExceptionsHandler {
         return new ResponseEntity<>(errorMessage, new HttpHeaders(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    @ExceptionHandler(value={Exception.class})
-    public ResponseEntity<Object> handleOtherException(Exception ex, WebRequest request){
+    @ExceptionHandler(value = {Exception.class})
+    public ResponseEntity<Object> handleOtherException(final Exception ex, final WebRequest request) {
 
         String message = "Unexpected: " + ex.getMessage();
         ErrorMessage errorMessage = new ErrorMessage(new Date(), message);
